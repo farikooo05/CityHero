@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -35,21 +35,43 @@ const pendingMarkerIcon = new L.DivIcon({
   iconAnchor: [20, 40],
 });
 
+const verifyingMarkerIcon = new L.DivIcon({
+  className: "bg-transparent",
+  html: `<div class="custom-marker" style="background-color: #8b5cf6; box-shadow: 0 0 15px #8b5cf6;">👀</div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+});
+
 export interface Problem {
   id: string;
   lat: number;
   lng: number;
   title: string;
-  status: "pending" | "approved" | "resolved";
+  status: "pending" | "approved" | "verifying" | "resolved";
+  solverType: "government" | "resident";
   points: number;
   author: string;
+  votes: number;
+  verifyVotes?: number;
+  image?: string;
+  description?: string;
 }
 
 interface MapProps {
   problems: Problem[];
+  onMapClick?: (lat: number, lng: number) => void;
 }
 
-export default function Map({ problems }: MapProps) {
+function MapClickHandler({ onMapClick }: { onMapClick?: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) onMapClick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
+export default function Map({ problems, onMapClick }: MapProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -67,6 +89,7 @@ export default function Map({ problems }: MapProps) {
         className="w-full h-full"
         zoomControl={false}
       >
+        <MapClickHandler onMapClick={onMapClick} />
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -78,6 +101,8 @@ export default function Map({ problems }: MapProps) {
             icon={
               problem.status === "resolved"
                 ? resolvedMarkerIcon
+                : problem.status === "verifying"
+                ? verifyingMarkerIcon
                 : problem.status === "pending"
                 ? pendingMarkerIcon
                 : customMarkerIcon

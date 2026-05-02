@@ -37,6 +37,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
+        {/* Suppress noise from browser extensions (like Brave wallet) in dev mode */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', (event) => {
+                if (event.message.includes('window.ethereum') || event.message.includes('selectedAddress')) {
+                  event.stopImmediatePropagation();
+                }
+              });
+            `,
+          }}
+        />
         {children}
       </body>
     </html>

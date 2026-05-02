@@ -7,14 +7,16 @@ import { useState, useRef, useEffect } from "react";
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, desc: string, category: string, location: { lat: number; lng: number } | null) => void;
+  onSubmit: (title: string, desc: string, category: string, location: { lat: number; lng: number } | null, image?: string, solverType?: "government" | "resident") => void;
+  selectedLocation?: { lat: number; lng: number } | null;
 }
 
-export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
+export default function ReportModal({ isOpen, onClose, onSubmit, selectedLocation }: ReportModalProps) {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [category, setCategory] = useState("");
+  const [solverType, setSolverType] = useState<"government" | "resident">("government");
   
   // New State for real features
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -22,53 +24,75 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
   const [isLocating, setIsLocating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch location when modal opens
+  // Sync selected location from props or simulate location fetch
   useEffect(() => {
-    if (isOpen && step === 1 && !location) {
-      setIsLocating(true);
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            });
-            setIsLocating(false);
-          },
-          (error) => {
-            console.error("Error getting location", error);
-            setIsLocating(false);
-          }
-        );
-      } else {
-        setIsLocating(false);
+    if (isOpen && step === 1) {
+      if (selectedLocation) {
+        setLocation(selectedLocation);
+      } else if (!location) {
+        setIsLocating(true);
+        // Simulate 1 second of 'detecting' before falling back to random
+        const timer = setTimeout(() => {
+          setIsLocating(false);
+        }, 1000);
+        return () => clearTimeout(timer);
       }
     }
-  }, [isOpen, step, location]);
+  }, [isOpen, step, location, selectedLocation]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        const img = new window.Image();
+        img.onload = () => {
+          // Compress the image to prevent Local Storage quota limit errors
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 800;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to 60% quality JPEG
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+          setImagePreview(compressedBase64);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
-    else {
-      onSubmit(title, desc, category, location);
-      setTimeout(() => {
-        setStep(1);
-        setTitle("");
-        setDesc("");
-        setCategory("");
-        setImagePreview(null);
-      }, 500);
+    if (step === 2) {
+      onSubmit(title, desc, category, location, imagePreview || undefined, solverType);
+      setStep(3);
+    } else if (step < 3) {
+      setStep(step + 1);
     }
+  };
+
+  const handleClose = () => {
+    onClose();
+    setTimeout(() => {
+      setStep(1);
+      setTitle("");
+      setDesc("");
+      setCategory("");
+      setSolverType("government");
+      setImagePreview(null);
+      setLocation(null);
+    }, 300);
   };
 
   return (
@@ -88,7 +112,7 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
             className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl relative"
           >
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 p-2 rounded-full z-10"
             >
               <X size={20} />
@@ -136,9 +160,9 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
                       {isLocating ? (
                         <span className="flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Locating...</span>
                       ) : location ? (
-                        `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+                        `Selected point: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
                       ) : (
-                        "Using default city center"
+                        "Generating random map location"
                       )}
                     </p>
                   </div>
@@ -174,6 +198,18 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
                       <option value="utilities">Utilities (Lights, Water)</option>
                       <option value="cleanliness">Cleanliness (Trash, Vandalism)</option>
                       <option value="safety">Safety (Hazards)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">Who can fix this?</label>
+                    <select
+                      value={solverType}
+                      onChange={(e) => setSolverType(e.target.value as "government" | "resident")}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary"
+                    >
+                      <option value="government">Government Services</option>
+                      <option value="resident">Local Community / Resident</option>
                     </select>
                   </div>
 
@@ -226,15 +262,12 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
                 <h2 className="text-3xl font-bold mb-2 text-white">Awesome!</h2>
                 <p className="text-slate-400 mb-6">Your report has been submitted. The city thanks you!</p>
 
-                <div className="bg-slate-800 rounded-2xl p-4 w-full flex items-center justify-between mb-8 border border-yellow-500/30">
-                  <span className="font-semibold text-white">Reward pending</span>
-                  <span className="flex items-center gap-1 text-yellow-500 font-bold text-lg">
-                    +50 🪙
-                  </span>
+                <div className="bg-slate-800 rounded-2xl p-4 w-full flex items-center justify-center mb-8 border border-slate-700">
+                  <span className="font-semibold text-slate-400">Status: <span className="text-yellow-500">Pending Approval</span></span>
                 </div>
 
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl transition-all"
                 >
                   Back to Map
