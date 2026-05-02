@@ -10,7 +10,8 @@ import ProblemList from "@/components/ProblemList";
 import AdminDashboard from "@/components/AdminDashboard";
 import { Problem } from "@/components/Map";
 
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Dynamically import map so it doesn't break SSR
 const MapComponent = dynamic(() => import("@/components/Map"), { ssr: false });
@@ -45,6 +46,7 @@ export default function Home() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
+  const [toast, setToast] = useState<{ message: string; icon: string } | null>(null);
   
   const [points, setPoints] = useState(840);
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -66,6 +68,11 @@ export default function Home() {
       setPoints(Number(savedPoints));
     }
   }, []);
+
+  const showToast = (message: string, icon: string) => {
+    setToast({ message, icon });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleMapClick = (lat: number, lng: number) => {
     setSelectedLocation({ lat, lng });
@@ -104,6 +111,7 @@ export default function Home() {
     
     // Save to local storage
     localStorage.setItem("cityhero_problems", JSON.stringify(newProblemsList));
+    showToast("Report Submitted! 🚀", "Hero");
   };
 
   const handleApprove = (id: string) => {
@@ -117,6 +125,7 @@ export default function Home() {
     
     setProblems(updatedProblems);
     localStorage.setItem("cityhero_problems", JSON.stringify(updatedProblems));
+    showToast("Report Published to Map! 🏛️", "Shield");
   };
 
   const handleMarkSolved = (id: string) => {
@@ -128,8 +137,10 @@ export default function Home() {
       if (p.id === id) {
         if (p.solverType === "government") {
           newPoints += p.points;
+          showToast(`Issue Resolved! 🪙 +${p.points}`, "Check");
           return { ...p, status: "resolved" as const };
         } else {
+          showToast("Sent to community verification! 👀", "Eye");
           return { ...p, status: "verifying" as const, verifyVotes: 0 };
         }
       }
@@ -153,8 +164,10 @@ export default function Home() {
         if (votes >= 3) {
           // Solved after 3 verifications! Give points to author (and potentially solver)
           newPoints += p.points;
+          showToast(`Fix Verified! 🪙 +${p.points}`, "Star");
           return { ...p, status: "resolved" as const, verifyVotes: votes };
         }
+        showToast(`Verification: ${votes}/3`, "Check");
         return { ...p, verifyVotes: votes };
       }
       return p;
@@ -185,7 +198,7 @@ export default function Home() {
       const newPoints = points - amount;
       setPoints(newPoints);
       localStorage.setItem("cityhero_points", newPoints.toString());
-      alert(`Successfully redeemed! Remaining points: ${newPoints} 🪙`);
+      showToast("Reward Redeemed! 🎟️", "Ticket");
     } else {
       alert("Not enough points!");
     }
@@ -257,6 +270,23 @@ export default function Home() {
         onSubmit={handleReportSubmit}
         selectedLocation={selectedLocation}
       />
+
+      {/* Global Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] glass-panel px-6 py-3 rounded-full border border-primary/30 shadow-2xl shadow-primary/20 flex items-center gap-3"
+          >
+            <div className="bg-primary/20 p-1.5 rounded-full text-primary">
+              <CheckCircle size={18} strokeWidth={3} />
+            </div>
+            <span className="text-white font-bold whitespace-nowrap">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

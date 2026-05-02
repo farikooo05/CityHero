@@ -1,76 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CityHero
 
-## Getting Started
+CityHero is an urban management platform designed to help people take better care of their cities by turning the reporting of local problems into a meaningful and rewarding experience. We built this project to solve a persistent issue in modern cities: the disconnect between citizens, community efforts, and municipal services.
 
-First, run the development server:
+## Project Vision
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The primary goal of CityHero is to transform the way residents interact with their urban environment. Many people want to improve their neighborhoods but do not know where to start or feel that their individual efforts will not be recognized. By gamifying civic engagement, we create a platform where every small action contributes to a larger, visible change on a shared interactive map.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Core Mechanics
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The heart of the project is a dual-track system for classifying and solving urban issues:
 
-# CityHero 🦸‍♂️🏙️
+### Government and Community Tracks
+When an issue is reported, it is categorized based on who is best equipped to handle it. Government issues are routed toward official municipal tracks for problems like major road repairs or utility failures. Resident issues are flagged for the local community, empowering neighbors to handle smaller tasks like trash cleanup or minor repairs themselves. This distinction ensures that resources are allocated efficiently and that the community can take immediate action on smaller problems.
 
-**CityHero** is a gamified urban reporting platform built for the hackathon. It empowers citizens to easily report urban problems (broken traffic lights, potholes, etc.) while earning **Microtokens (🪙)** and climbing the district/city leaderboards.
+### The Verification Protocol
+To ensure that the system remains honest and that rewards are only granted for genuine fixes, we implemented a community-led verification protocol. When an issue marked for the resident track is solved, it does not immediately disappear. Instead, it enters a verification phase. Three independent community members must confirm that the fix is complete before the issue is officially resolved and the reporter or solver receives their reward tokens.
 
-## Features (MVP)
-1. **Interactive Map**: Live status of reported problems across the city (using Leaflet).
-2. **One-Tap Reporting**: An intuitive, animated flow to capture a photo, location, and issue details.
-3. **Gamification & Leaderboard**: Earn microtokens for valid reports. Compete against neighbors on the local and global leaderboards.
-4. **Reward System**: A profile view where microtokens can be redeemed for transit passes or partner discounts.
-5. **Modern Tech Stack**: Built with Next.js 15, Tailwind CSS v4, and Framer Motion for smooth, wow-factor animations.
+## Technical Decisions
 
-## How to Run locally
+We focused heavily on the user experience and the practical limitations of running a web-based reporting tool in a real city environment.
 
-### Prerequisites
-- Node.js (v18.x or later)
-- npm or pnpm
+### Map-First Interface
+The application is centered around an interactive map that provides immediate visual feedback. Users can see pending, active, and verifying issues at a glance, allowing them to understand the health of their neighborhood in real-time. We also implemented manual location selection to allow users to report issues precisely, even if their GPS signal is weak.
 
-### Getting Started
+### Mobile Optimization and Storage
+Since reporting often happens on the go, we optimized the app for mobile devices. One critical feature is our canvas-based image compression. Mobile photos are often too large for browser-based local storage, so we implemented a system that automatically scales and compresses evidence photos before they are saved. This ensures that the application remains fast and can store dozens of reports without reaching technical limits.
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+## Moving Forward
 
-2. **Run the development server**:
-   ```bash
-   npm run dev
-   ```
-
-3. **Open the app**:
-   Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
-   *Tip: Use Chrome DevTools to simulate a mobile device (e.g., iPhone 14 Pro) for the best viewing experience, as CityHero is designed mobile-first!*
-
-## Hackathon Pitch & Demo Flow
-For a 3-4 minute presentation, follow this simulation flow:
-1. **Introduction**: Show the home screen and explain the "gamified civic duty" concept.
-2. **The "Wow" Action**: Click the central **Report** button. 
-   - Walk through the 3-step animated modal. 
-   - Note the automatic location tracking.
-   - Show the success animation and points earned.
-3. **The Map**: Navigate to the Map tab. Show the new problem marker dropped dynamically with an orange "Pending" icon. Point out other green "Approved" markers.
-4. **The Competition**: Open the **Rank** tab. Show how the leaderboard dynamically lists top contributors.
-5. **The Payoff**: Open the **Profile** tab. Show the rewards card highlighting that points equal real-world benefits.
-
-## Built With
-- **Frontend**: Next.js App Router, React
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Maps**: React-Leaflet
-- **Icons**: Lucide-React
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+CityHero is designed to be a foundation for a more connected city. In the future, we envision deeper integrations with official municipal databases and the use of machine learning to automatically categorize reported issues based on photo evidence. Ultimately, the project is about building a sense of ownership and community pride, proving that when residents are given the right tools, they can be the most effective guardians of their own city.
