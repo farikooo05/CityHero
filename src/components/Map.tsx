@@ -14,16 +14,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const customMarkerIcon = new L.DivIcon({
+const govMarkerIcon = new L.DivIcon({
   className: "bg-transparent",
-  html: `<div class="custom-marker">🚨</div>`,
+  html: `<div class="custom-marker" style="background-color: #3b82f6; box-shadow: 0 0 15px #3b82f6;">🏛️</div>`,
   iconSize: [40, 40],
   iconAnchor: [20, 40],
 });
 
-const resolvedMarkerIcon = new L.DivIcon({
+const residentMarkerIcon = new L.DivIcon({
   className: "bg-transparent",
-  html: `<div class="custom-marker" style="background-color: var(--accent); box-shadow: 0 0 15px var(--accent);">✅</div>`,
+  html: `<div class="custom-marker" style="background-color: #10b981; box-shadow: 0 0 15px #10b981;">🤝</div>`,
   iconSize: [40, 40],
   iconAnchor: [20, 40],
 });
@@ -60,6 +60,17 @@ export interface Problem {
 interface MapProps {
   problems: Problem[];
   onMapClick?: (lat: number, lng: number) => void;
+  center?: [number, number] | null;
+}
+
+function MapRecenter({ center }: { center?: [number, number] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center, 16, { animate: true });
+    }
+  }, [center, map]);
+  return null;
 }
 
 function MapClickHandler({ onMapClick }: { onMapClick?: (lat: number, lng: number) => void }) {
@@ -71,7 +82,7 @@ function MapClickHandler({ onMapClick }: { onMapClick?: (lat: number, lng: numbe
   return null;
 }
 
-export default function Map({ problems, onMapClick }: MapProps) {
+export default function Map({ problems, onMapClick, center }: MapProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -89,6 +100,7 @@ export default function Map({ problems, onMapClick }: MapProps) {
         className="w-full h-full"
         zoomControl={false}
       >
+        <MapRecenter center={center} />
         <MapClickHandler onMapClick={onMapClick} />
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
@@ -99,13 +111,13 @@ export default function Map({ problems, onMapClick }: MapProps) {
             key={problem.id}
             position={[problem.lat, problem.lng]}
             icon={
-              problem.status === "resolved"
-                ? resolvedMarkerIcon
-                : problem.status === "verifying"
+              problem.status === "verifying"
                 ? verifyingMarkerIcon
                 : problem.status === "pending"
                 ? pendingMarkerIcon
-                : customMarkerIcon
+                : problem.solverType === "government"
+                ? govMarkerIcon
+                : residentMarkerIcon
             }
           >
             <Popup className="glass-popup">

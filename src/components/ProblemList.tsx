@@ -8,9 +8,10 @@ interface ProblemListProps {
   problems: Problem[];
   onVote: (id: string) => void;
   onVerifyFix: (id: string) => void;
+  onProblemSelect: (lat: number, lng: number) => void;
 }
 
-export default function ProblemList({ problems, onVote, onVerifyFix }: ProblemListProps) {
+export default function ProblemList({ problems, onVote, onVerifyFix, onProblemSelect }: ProblemListProps) {
   // Sort problems by votes (descending)
   const sortedProblems = [...problems].sort((a, b) => b.votes - a.votes);
 
@@ -59,7 +60,10 @@ export default function ProblemList({ problems, onVote, onVerifyFix }: ProblemLi
               </div>
 
               {/* Content Side */}
-              <div className="flex-1 min-w-0">
+              <div 
+                className="flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => onProblemSelect(problem.lat, problem.lng)}
+              >
                 <div className="flex items-center gap-2 mb-1">
                   {problem.status === "resolved" ? (
                     <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-bold uppercase tracking-wider">

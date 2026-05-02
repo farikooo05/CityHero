@@ -44,6 +44,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("map");
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   
   const [points, setPoints] = useState(840);
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -69,6 +70,11 @@ export default function Home() {
   const handleMapClick = (lat: number, lng: number) => {
     setSelectedLocation({ lat, lng });
     setIsReportOpen(true);
+  };
+
+  const handleProblemSelect = (lat: number, lng: number) => {
+    setMapCenter([lat, lng]);
+    setActiveTab("map");
   };
 
   const handleReportSubmit = (title: string, desc: string, category: string, location: { lat: number; lng: number } | null, image?: string, solverType?: "government" | "resident") => {
@@ -213,12 +219,18 @@ export default function Home() {
       <div className="h-full w-full">
         {activeTab === "map" && (
           <MapComponent 
-            problems={problems.filter(p => p.status === "approved" || p.status === "resolved")} 
+            problems={problems.filter(p => p.status === "approved" || p.status === "verifying")} 
             onMapClick={handleMapClick}
+            center={mapCenter}
           />
         )}
         {activeTab === "home" && (
-          <ProblemList problems={problems} onVote={handleVote} onVerifyFix={handleVerifyFix} />
+          <ProblemList 
+            problems={problems} 
+            onVote={handleVote} 
+            onVerifyFix={handleVerifyFix} 
+            onProblemSelect={handleProblemSelect}
+          />
         )}
         {activeTab === "leaderboard" && <Leaderboard />}
         {activeTab === "profile" && <Profile points={points} onRedeem={handleRedeem} isClient={isClient} />}
